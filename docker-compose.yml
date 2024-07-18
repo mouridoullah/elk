@@ -1,0 +1,77 @@
+version: '3.7'
+
+services:
+  elasticsearch:
+    build:
+      context: ./elasticsearch
+      args:
+        ELASTIC_VERSION: ${ELASTIC_VERSION}
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    networks:
+      - elk
+
+  logstash:
+    build:
+      context: ./logstash
+      args:
+        ELASTIC_VERSION: ${ELASTIC_VERSION}
+    container_name: logstash
+    volumes:
+      - ./logstash/pipeline:/usr/share/logstash/pipeline
+    ports:
+      - "5044:5044"
+      - "9600:9600"
+    networks:
+      - elk
+    depends_on:
+      - elasticsearch
+
+  kibana:
+    build:
+      context: ./kibana
+      args:
+        ELASTIC_VERSION: ${ELASTIC_VERSION}
+    container_name: kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    networks:
+      - elk
+    depends_on:
+      - elasticsearch
+
+  filebeat:
+    build:
+      context: ./filebeat
+      args:
+        ELASTIC_VERSION: ${ELASTIC_VERSION}
+    container_name: filebeat
+    user: root
+    volumes:
+      - ./filebeat/config/filebeat.yml:/usr/share/filebeat/filebeat.yml
+      - /var/log:/var/log
+    networks:
+      - elk
+    depends_on:
+      - logstash
+
+
+volumes:
+  esdata:
+
+networks:
+  elk:
+    driver: bridge
