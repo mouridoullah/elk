@@ -33,5 +33,3 @@ This project sets up the ELK stack (Elasticsearch, Logstash, Kibana) along with 
 
 - Elasticsearch: [http://localhost:9200](http://localhost:9200)
 - Kibana: [http://localhost:5601](http://localhost:5601)
-
-8.14.3
